@@ -114,7 +114,9 @@
   });
   document.querySelectorAll('.share-button').forEach(share=>share.addEventListener('click',async e=>{
     const button=e.currentTarget,status=$('#share-status');
-    const cleanUrl=new URL(location.pathname,location.origin).href;
+    const shareUrl=new URL(location.pathname,location.origin);
+    shareUrl.searchParams.set('share','cherry-01-20261111');
+    const cleanUrl=shareUrl.href;
     try {
       if(navigator.share) {await navigator.share({title:document.title,text:page==='/first-taste'?'Meet CHERRY 01. Cherry-flavored nail lacquer is coming.':'a little more than meets the eye 🍒',url:cleanUrl});button.textContent='shared';event('share');}
       else {await navigator.clipboard.writeText(cleanUrl);button.textContent='link copied';event('share_copy');}
