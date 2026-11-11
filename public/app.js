@@ -2,7 +2,15 @@
   'use strict';
   const $ = selector => document.querySelector(selector);
   const page=document.body.dataset.page;
-  const measurementAllowed=navigator.doNotTrack!=='1' && !navigator.globalPrivacyControl;
+  const privatePage=['/studio','/confirm-email','/leave','/404'].includes(page);
+  let excluded=false;
+  try {
+    const preference=new URLSearchParams(location.search).get('measure');
+    if(preference==='off')sessionStorage.setItem('leche_measure_off','1');
+    if(preference==='on')sessionStorage.removeItem('leche_measure_off');
+    excluded=sessionStorage.getItem('leche_measure_off')==='1';
+  } catch {}
+  const measurementAllowed=!privatePage && !excluded && navigator.doNotTrack!=='1' && !navigator.globalPrivacyControl;
   async function api(path,data) {
     const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     let result;
@@ -10,15 +18,37 @@
     if(!response.ok) throw Object.assign(new Error(result.error||'Something went wrong. Please try again.'),{field:result.field});
     return result;
   }
-  function event(name) { if(measurementAllowed) api('/api/event',{event:name,path:page}).catch(()=>{}); }
+  const measured=new Set();
+  function event(name) {
+    if(!measurementAllowed||measured.has(name))return;
+    measured.add(name);
+    fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event:name,path:page}),keepalive:true}).catch(()=>{});
+  }
+  const canonical=$('link[rel="canonical"]')?.href;
+  if(measurementAllowed && location.protocol==='https:' && canonical && new URL(canonical).origin===location.origin) {
+    const beacon=document.createElement('script');beacon.type='module';
+    beacon.src='https://static.cloudflareinsights.com/beacon.min.js';
+    beacon.dataset.cfBeacon=JSON.stringify({token:'c92f5b2bbce648709089ba2f867baf22'});
+    document.head.append(beacon);
+  }
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a');if(!a)return;
+    const u=new URL(a.href,location.href);
+    if(u.origin===location.origin&&u.pathname==='/early-access')event('early_access_click');
+    if(u.hostname==='www.instagram.com'||u.hostname==='instagram.com')event('instagram_click');
+  });
+  document.querySelectorAll('#signup-form,#interest-form').forEach(form=>form.addEventListener('focusin',()=>event('signup_start'),{once:true}));
   if(!['/studio','/confirm-email','/leave'].includes(page))event('page_view'); if(page==='/first-taste') event('product_view');
   const query=new URLSearchParams(location.search);
-  const currentAttribution={source:query.get('utm_source'),medium:query.get('utm_medium'),campaign:query.get('utm_campaign'),referrer:document.referrer,path:page};
+  const tag=v=>v&&/^[a-zA-Z0-9 _.-]{1,80}$/.test(v)?v:null;
+  let referrer=null;try{const ref=new URL(document.referrer);if(ref.origin!==location.origin)referrer=ref.origin;}catch{}
+  const currentAttribution=measurementAllowed?{source:tag(query.get('utm_source')),medium:tag(query.get('utm_medium')),campaign:tag(query.get('utm_campaign')),referrer,path:page}:{path:page};
   let attribution=currentAttribution;
   // Keep only first-touch campaign fields for this tab. No tracking identifier.
   try {
     const previous=sessionStorage.getItem('leche_attribution');
-    if(previous) attribution=JSON.parse(previous);
+    if(!measurementAllowed)sessionStorage.removeItem('leche_attribution');
+    else if(previous) attribution=JSON.parse(previous);
     else sessionStorage.setItem('leche_attribution',JSON.stringify(currentAttribution));
   } catch {}
 
@@ -71,7 +101,7 @@
     if(!consent.checked) {status.textContent='Please tick the email consent box to join.';consent.setAttribute('aria-invalid','true');consent.focus();return;}
     button.disabled=true;button.textContent='saving your place…';
     try { await api('/api/signup',{email:email.value,consent:true,company:$('#company').value,attribution});await showSurvey();await requestConfirmation($('#email-state')); }
-    catch(error) {status.textContent=error.message;}
+    catch(error) {status.textContent=error.message;event('signup_error');}
     finally {button.disabled=false;button.innerHTML='let me in <span aria-hidden="true">↗</span>';}
   });
   if(signup) fetch('/api/session',{cache:'no-store'}).then(r=>r.json()).then(s=>{if(s.editable)showSurvey(false).catch(()=>{});}).catch(()=>{});
@@ -82,15 +112,15 @@
     catch(error){status.textContent=error.message;}
     finally{button.disabled=false;}
   });
-  $('.share-button')?.addEventListener('click',async e=>{
+  document.querySelectorAll('.share-button').forEach(share=>share.addEventListener('click',async e=>{
     const button=e.currentTarget,status=$('#share-status');
     const cleanUrl=new URL(location.pathname,location.origin).href;
     try {
-      if(navigator.share) {await navigator.share({title:'The world of LÈCHE',text:'a little more than meets the eye. 🍒',url:cleanUrl});button.textContent='shared ↗';}
-      else {await navigator.clipboard.writeText(cleanUrl);button.textContent='link copied ↗';}
-      status.textContent='Ready to share.';event('share');
+      if(navigator.share) {await navigator.share({title:document.title,text:page==='/first-taste'?'Meet CHERRY 01. Cherry-flavored nail lacquer is coming.':'a little more than meets the eye. 🍒',url:cleanUrl});button.textContent='shared ↗';event('share');}
+      else {await navigator.clipboard.writeText(cleanUrl);button.textContent='link copied ↗';event('share_copy');}
+      status.textContent='Ready to share.';
     } catch(error){if(error.name!=='AbortError'){button.textContent='copy the address to share';status.textContent='Sharing is unavailable. Copy the page address from your browser.';}}
-  });
+  }));
   $('#unsubscribe')?.addEventListener('click',async e=>{
     const button=e.currentTarget;button.disabled=true;
     try {const result=await api('/api/unsubscribe',{});$('#unsubscribe-status').textContent=result.message;button.textContent='unsubscribed';}
@@ -111,10 +141,10 @@
       if(announce)$('#gallery-status').textContent=`Image ${index+1} of ${slides.length}: ${names[index]}`;
       if(viewer.open){const source=slides[index].querySelector('img');$('.viewer-image').src=source.src;$('.viewer-image').alt=source.alt;$('.viewer-count').textContent=`${index+1} / ${slides.length}`;}
     }
-    function go(i){update(i,true);gallery.scrollTo({left:index*gallery.clientWidth,behavior:reduce()?'instant':'smooth'});}
+    function go(i){event('gallery_engaged');update(i,true);gallery.scrollTo({left:index*gallery.clientWidth,behavior:reduce()?'instant':'smooth'});}
     thumbs.forEach((b,i)=>b.addEventListener('click',()=>go(i)));
     $('.gallery-prev').addEventListener('click',()=>go(index-1));$('.gallery-next').addEventListener('click',()=>go(index+1));
-    gallery.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(()=>{update(Math.round(gallery.scrollLeft/gallery.clientWidth));ticking=false;});}},{passive:true});
+    gallery.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(()=>{const next=Math.round(gallery.scrollLeft/gallery.clientWidth);if(next>0)event('gallery_engaged');update(next);ticking=false;});}},{passive:true});
     gallery.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();go(index+(e.key==='ArrowRight'?1:-1));}});
     new ResizeObserver(()=>gallery.scrollTo({left:index*gallery.clientWidth,behavior:'instant'})).observe(gallery);
     slides.forEach((slide,i)=>slide.querySelector('button').addEventListener('click',e=>{lastTrigger=e.currentTarget;viewer.showModal();document.documentElement.classList.add('viewer-open');update(i);$('.viewer-close').focus();}));
@@ -167,7 +197,7 @@
         $('#interest-entry').hidden=true;$('#interest-success').hidden=false;
         $('#interest-saved-message').textContent=session.editable&&session.purchaseInterest?.interested?`Your interest at the proposed $${Number($('.price-proposition').dataset.price)/100} price is saved. No order or payment has been made.`:'Your request is received. If this email is already on the list, it remains subscribed. Existing preferences have not been changed.';
         $('#interest-success h2').focus({preventScroll:true});await requestConfirmation($('#interest-success .email-status'));
-      }catch(err){status.textContent=err.message;}
+      }catch(err){status.textContent=err.message;event('signup_error');}
       finally{button.disabled=false;button.innerHTML='save my interest <span aria-hidden="true">↗</span>';}
     });
     const priceBox=$('.price-proposition');
