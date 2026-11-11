@@ -10,13 +10,13 @@ import { openStore } from '../src/store.mjs';
 const origin='https://tasteleche.example';
 test('search metadata, schemas and social artwork agree on canonical origin and real page content',()=>{
   const titles=new Set();
-  const productImage=origin+'/assets/feed/row-2-middle-cherry-01-bottle.jpg';
+  const productImage=origin+'/assets/feed/row-2-middle-cherry-01-bottle.jpg?v=product-only-20261111';
   for(const path of routes){
     const html=renderPage(path,origin);const title=html.match(/<title>(.*?)<\/title>/)[1];assert.ok(!titles.has(title));titles.add(title);
     assert.match(html,new RegExp(`rel="canonical" href="${origin}${path==='/'?'':path}"`));
     const image=html.match(/property="og:image" content="([^"]+)"/)[1];
     assert.equal(image,productImage);
-    assert.ok(existsSync(new URL('../public'+image.slice(origin.length),import.meta.url)));
+    assert.ok(existsSync(new URL('../public'+image.slice(origin.length).split('?')[0],import.meta.url)));
     assert.ok(html.includes(`name="twitter:image" content="${image}"`));
     assert.match(html,/property="og:image:alt" content="CHERRY 01 nail lacquer bottle beside cherries"/);
     assert.match(html,/property="og:image:width" content="1080"/);

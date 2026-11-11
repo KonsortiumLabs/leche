@@ -40,3 +40,11 @@ test('all rendered routes have unique IDs, available local images, alt text, and
   assert.match(product,/Edibility has not been validated/);
   assert.match(product,/a little more than meets the eye 🍒/);
  });
+
+test('requested supporting phrases start their own responsive lines and logo uses cherry ink',()=>{
+ const product=renderPage('/first-taste','');
+ for(const phrase of ['Color, gloss, and a little something extra.','and naturally derived ingredients as our starting point.','We’ll share final ingredients and supported uses before launch.']) assert.ok(product.includes('<span class="copy-line">'+phrase+'</span>'));
+ assert.ok(renderPage('/world','').includes('<span class="copy-line">Flavored lip gloss and body glazes are next on our mind.</span>'));
+ assert.ok(product.includes('0.294118  0 0 0 0 0.050980  0 0 0 0 0.105882'));
+ assert.ok(product.includes('id="brand-light"'));
+});
