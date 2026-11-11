@@ -44,3 +44,9 @@
 - Six local tests pass, including the Worker handler against a SQLite-backed implementation of D1's binding interface. These validate actual SQL and transaction behavior, not Cloudflare's deployed runtime.
 - Cloudflare is currently signed out. Public deployment, actual D1 migration, live signup verification and browser visual QA remain outstanding. Do not claim the site is live until a public URL is verified.
 - The repository connection cannot write through its connector; signed-in GitHub browser uploads are used. No unrelated repositories are changed.
+
+## 2026-11-11 — Flagship visual overhaul
+- User requested a more immersive, contemporary beauty flagship and clearer product differentiation, with mobile as the priority.
+- Reworked opening into full-bleed approved campaign imagery, immediate flavored-lacquer positioning, paired editorial typography, softer controls, and distinct image-led routes.
+- Original raster wordmark retained byte-for-byte; SVG color filter removes the paper background only at rendering, with inverse ink on dark photography. No redrawn logo or regenerated image.
+- Signup endpoints, consent, survey ownership, and D1 persistence retained.
