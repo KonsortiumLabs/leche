@@ -29,3 +29,14 @@ test('all rendered routes have unique IDs, available local images, alt text, and
   assert.equal([...signup.matchAll(/<option\b/g)].length,[...signup.matchAll(/<\/option>/g)].length);
   assert.match(readFileSync(resolve(root,'public/styles.css'),'utf8'),/prefers-reduced-motion/);
 });
+
+ test('brand copy keeps allure understated and product claims qualified',()=>{
+  for (const route of routes) {
+    const html=renderPage(route,'https://tasteleche.com');
+    assert.doesNotMatch(html,/kissing|intimacy|intimate|for your(?:<br>)?\s*(?:<em>)?own pleasure/i);
+  }
+  const product=renderPage('/first-taste','');
+  assert.match(product,/cherry-flavored nail lacquer/);
+  assert.match(product,/Edibility has not been validated/);
+  assert.match(product,/a little more than meets the eye 🍒/);
+ });

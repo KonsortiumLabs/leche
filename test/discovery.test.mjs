@@ -4,19 +4,23 @@ import { existsSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { renderPage, routes, utilityRoutes } from '../src/pages.mjs';
-import { robots, sitemap, SEARCH_PAGES, SHARE_CARDS } from '../src/seo.mjs';
+import { robots, sitemap, SEARCH_PAGES } from '../src/seo.mjs';
 import { validEvent } from '../src/analytics.mjs';
 import { openStore } from '../src/store.mjs';
 const origin='https://tasteleche.example';
 test('search metadata, schemas and social artwork agree on canonical origin and real page content',()=>{
-  const titles=new Set(),cards=new Set();
+  const titles=new Set();
+  const productImage=origin+'/assets/feed/row-2-middle-cherry-01-bottle.jpg';
   for(const path of routes){
     const html=renderPage(path,origin);const title=html.match(/<title>(.*?)<\/title>/)[1];assert.ok(!titles.has(title));titles.add(title);
     assert.match(html,new RegExp(`rel="canonical" href="${origin}${path==='/'?'':path}"`));
     const image=html.match(/property="og:image" content="([^"]+)"/)[1];
-    assert.ok(image.startsWith(origin+'/assets/social/'));assert.ok(existsSync(new URL('../public'+image.slice(origin.length),import.meta.url)));
-    if(SHARE_CARDS[path])cards.add(image);
-    assert.match(html,/name="twitter:image"/);assert.match(html,/property="og:image:alt"/);assert.match(html,/content="1200"/);assert.match(html,/content="630"/);
+    assert.equal(image,productImage);
+    assert.ok(existsSync(new URL('../public'+image.slice(origin.length),import.meta.url)));
+    assert.ok(html.includes(`name="twitter:image" content="${image}"`));
+    assert.match(html,/property="og:image:alt" content="CHERRY 01 nail lacquer bottle beside cherries"/);
+    assert.match(html,/property="og:image:width" content="1080"/);
+    assert.match(html,/property="og:image:height" content="1080"/);
     if(SEARCH_PAGES.includes(path)){
       assert.match(html,/index,follow,max-image-preview:large/);
       const data=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
@@ -24,12 +28,12 @@ test('search metadata, schemas and social artwork agree on canonical origin and 
       assert.doesNotMatch(JSON.stringify(data),/"offers"|"aggregateRating"|"price"|"availability"/);
     }else assert.match(html,/noindex,follow/);
   }
-  assert.equal(cards.size,4);
   for(const path of [...utilityRoutes,'/missing']){
     const html=renderPage(path,origin);assert.match(html,/noindex,nofollow/);assert.doesNotMatch(html,/rel="canonical"|application\/ld\+json/);
   }
   assert.match(renderPage('/',''),/noindex,nofollow/);
   const map=sitemap(origin);for(const path of SEARCH_PAGES)assert.ok(map.includes(`<loc>${origin}${path==='/'?'':path}</loc>`));
+  assert.ok(map.includes(`<image:loc>${productImage}</image:loc>`));
   assert.doesNotMatch(map,/\/privacy|\/studio|confirm-email|\/leave/);
   assert.match(robots(origin),/Disallow: \/api\//);assert.doesNotMatch(robots(origin),/Disallow: \/studio/);
 });
