@@ -82,3 +82,10 @@
 ## November 11: recognizable browser favicon
 - Use the enlarged original sculptural L extracted from the approved raster wordmark, cream on oxblood. Full logo and campaign assets remain unchanged.
 - Dedicated 16, 32 and 48 pixel PNG favicons plus a 180 pixel Apple touch icon, with new filenames to refresh browser caches. Source crop is embedded in favicon-l.svg.
+
+## November 11: search, sharing and measurement
+- Added descriptive per-page search titles, complete Open Graph/Twitter cards, Organization/WebSite/WebPage/breadcrumb schema, canonical URLs and an image sitemap. No fabricated Product offers, ratings, availability or safety claims.
+- Four 1200x630 JPEG share cards use the exact approved wordmark and campaign photos; source composition is scripts/share-cards.html. Private utility pages and previews are noindex; crawler access remains open so noindex is readable.
+- Registered free Cloudflare Web Analytics for leche.kash-3bb.workers.dev. Public beacon token is not a credential. Browser loader respects DNT/GPC and the per-tab measure=off QA exclusion, never loads on owner or email-action routes, and never reads form values.
+- Added bounded first-party event names, 30-day daily/page reporting without the previous 500-row truncation, all-time active source/campaign cohorts, and a campaign-link builder. Counts are events or saved records, never represented as unique-visitor conversion rates or sales.
+- Custom domain purchase and Google/Bing webmaster verification are not yet confirmed. Current canonical remains workers.dev until SITE_URL and the hostname are deliberately changed.
