@@ -2,7 +2,7 @@
 export const PUBLIC_ORIGIN = 'https://tasteleche.com';
 export const SEARCH_PAGES = ['/', '/first-taste', '/world', '/early-access', '/contact'];
 const SHARE_IMAGE = {
-  path: '/assets/feed/row-2-middle-cherry-01-bottle.jpg',
+  path: '/assets/feed/row-2-middle-cherry-01-bottle.jpg?v=product-only-20261111',
   alt: 'CHERRY 01 nail lacquer bottle beside cherries',
   width: 1080,
   height: 1080
