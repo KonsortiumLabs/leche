@@ -15,3 +15,9 @@
 - Hard budget: $0. This is a concept. Do not activate paid plans, enter payment details, purchase domains, or enable usage billing.
 - Target Cloudflare Workers Free + D1 Free, using a free workers.dev address. Preserve all original imagery and the real signup flow.
 - The Render proposal was not deployed and has been disabled.
+
+## Brand direction update — 2026-11-11
+- LÈCHE is a real new brand developing products in real time. Present as pre-launch, not a speculative exercise. Avoid repeated concept/development jargon in campaign copy.
+- Flavored beauty is the broader identity: nails first, lip gloss and body glazes as future directions, not available products. Real-fruit flavor and naturally derived ingredients are formulation goals until confirmed.
+- Sensual and intimate, but everyday beauty and women’s own enjoyment remain central. Do not position solely as a sex-play brand or assert unverified edible/intimate-use safety.
+- No em dashes in consumer copy. Add 🍒 after “a little more than meets the eye.” Link @tasteleche prominently.

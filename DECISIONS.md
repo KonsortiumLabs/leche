@@ -50,3 +50,15 @@
 - Reworked opening into full-bleed approved campaign imagery, immediate flavored-lacquer positioning, paired editorial typography, softer controls, and distinct image-led routes.
 - Original raster wordmark retained byte-for-byte; SVG color filter removes the paper background only at rendering, with inverse ink on dark photography. No redrawn logo or regenerated image.
 - Signup endpoints, consent, survey ownership, and D1 persistence retained.
+
+## 2026-11-11 — Pre-launch voice and secondary-page rebuild
+- Shifted from repeated concept language to a real pre-launch beauty brand voice, per user direction.
+- Clear flavored-beauty identity with CHERRY 01 first; future lip gloss/body glaze ambitions and natural/fruit formulation direction described without asserting final ingredients or validated safety.
+- Product page pairs full original bottle image with short premise, signup, and ingredient/care details. Brand page separates self-directed pleasure, broader vision, campaign, and invitation. Signup retains consent and real persistence.
+- Added cherry tagline and prominent Instagram links; removed em dashes from public copy.
+
+## 2026-11-11 — Mobile interaction and commerce path
+- Added native swipe/scroll-snap four-image product gallery, thumbnails, arrow-key/buttons, full-screen viewer, and reduced-motion-aware transitions.
+- Added mobile join-list dock that yields to the primary action and footer, plus full-height mobile navigation with focus management and background inertness.
+- Mapped real shopping, bag, checkout, verified order, and post-purchase states in docs/LAUNCH_PLAN.md. Public action remains pre-launch because no final formula/price/stock/fulfillment is confirmed.
+- Kid Licks is a likely category reference only. Do not copy its ingredient list as LÈCHE's or treat its claims as proof of tasting/intimate-use suitability.
