@@ -8,7 +8,7 @@ import { renderPage, routes } from './pages.mjs';
 
 const project = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const publicDir = resolve(project, 'public');
-const MIME = {'.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon'};
+const MIME = {'.svg':'image/svg+xml','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon'};
 const allowedPaths = new Set([...routes, '/404']);
 const valid = {
   flavor: ['cherry','vanilla','peach','undecided'],
