@@ -102,7 +102,7 @@
     button.disabled=true;button.textContent='saving your place…';
     try { await api('/api/signup',{email:email.value,consent:true,company:$('#company').value,attribution});await showSurvey();await requestConfirmation($('#email-state')); }
     catch(error) {status.textContent=error.message;event('signup_error');}
-    finally {button.disabled=false;button.innerHTML='let me in <span aria-hidden="true">↗</span>';}
+    finally {button.disabled=false;button.textContent='let me in';}
   });
   if(signup) fetch('/api/session',{cache:'no-store'}).then(r=>r.json()).then(s=>{if(s.editable)showSurvey(false).catch(()=>{});}).catch(()=>{});
   $('#survey-form')?.addEventListener('submit',async e=>{
@@ -116,8 +116,8 @@
     const button=e.currentTarget,status=$('#share-status');
     const cleanUrl=new URL(location.pathname,location.origin).href;
     try {
-      if(navigator.share) {await navigator.share({title:document.title,text:page==='/first-taste'?'Meet CHERRY 01. Cherry-flavored nail lacquer is coming.':'a little more than meets the eye. 🍒',url:cleanUrl});button.textContent='shared ↗';event('share');}
-      else {await navigator.clipboard.writeText(cleanUrl);button.textContent='link copied ↗';event('share_copy');}
+      if(navigator.share) {await navigator.share({title:document.title,text:page==='/first-taste'?'Meet CHERRY 01. Cherry-flavored nail lacquer is coming.':'a little more than meets the eye 🍒',url:cleanUrl});button.textContent='shared';event('share');}
+      else {await navigator.clipboard.writeText(cleanUrl);button.textContent='link copied';event('share_copy');}
       status.textContent='Ready to share.';
     } catch(error){if(error.name!=='AbortError'){button.textContent='copy the address to share';status.textContent='Sharing is unavailable. Copy the page address from your browser.';}}
   }));
@@ -198,7 +198,7 @@
         $('#interest-saved-message').textContent=session.editable&&session.purchaseInterest?.interested?`Your interest at the proposed $${Number($('.price-proposition').dataset.price)/100} price is saved. No order or payment has been made.`:'Your request is received. If this email is already on the list, it remains subscribed. Existing preferences have not been changed.';
         $('#interest-success h2').focus({preventScroll:true});await requestConfirmation($('#interest-success .email-status'));
       }catch(err){status.textContent=err.message;event('signup_error');}
-      finally{button.disabled=false;button.innerHTML='save my interest <span aria-hidden="true">↗</span>';}
+      finally{button.disabled=false;button.textContent='save my interest';}
     });
     const priceBox=$('.price-proposition');
     const priceObserver=new IntersectionObserver(entries=>{if(entries[0].isIntersecting){event(`price_view_${priceBox.dataset.price}`);priceObserver.disconnect();}},{threshold:.5});priceObserver.observe(priceBox);

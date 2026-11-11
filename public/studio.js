@@ -27,7 +27,7 @@
   const bag=$('#preview-bag');
   function update(){ $('#quantity-value').textContent=quantity;$('#bag-subtotal').textContent=`$${(stats.offer.cents*quantity/100).toFixed(2)}`;$('#quantity-minus').disabled=quantity<=1;$('#quantity-plus').disabled=quantity>=6;$('#bag-items').hidden=quantity===0;$('#bag-empty').hidden=quantity!==0; }
   function close(){bag.close();document.documentElement.classList.remove('viewer-open');$('#preview-add').focus();}
-  $('#preview-availability').addEventListener('change',e=>{$('#preview-add').textContent=e.target.value==='sold-out'?'notify me ↗':'add to bag ↗';$('#preview-message').textContent='';});
+  $('#preview-availability').addEventListener('change',e=>{$('#preview-add').textContent=e.target.value==='sold-out'?'notify me':'add to bag';$('#preview-message').textContent='';});
   $('#preview-add').addEventListener('click',()=>{if($('#preview-availability').value==='sold-out'){$('#preview-message').textContent='Preview: this state will offer a restock notification. No subscription was created.';return;}quantity=1;$('#checkout-preview').hidden=true;$('#confirmation-preview').hidden=true;update();bag.showModal();document.documentElement.classList.add('viewer-open');});
   $('#quantity-minus').addEventListener('click',()=>{quantity=Math.max(1,quantity-1);update();});$('#quantity-plus').addEventListener('click',()=>{quantity=Math.min(6,quantity+1);update();});$('#bag-remove').addEventListener('click',()=>{quantity=0;update();});
   $('#bag-close').addEventListener('click',close);$('#preview-finish').addEventListener('click',close);bag.addEventListener('close',()=>document.documentElement.classList.remove('viewer-open'));
