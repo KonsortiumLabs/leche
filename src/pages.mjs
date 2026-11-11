@@ -23,12 +23,12 @@ const img = (src, alt, cls='', priority=false, sizes='(max-width:760px) 100vw, 5
 };
 const logo = (cls='') => `<span class="wordmark ${cls}"><img src="/assets/brand/original-rounded-wordmark-reference.jpg" alt="LÈCHE" width="677" height="427"></span>`;
 const meta = {
-  '/': ['LÈCHE | Flavored Beauty & Cherry Nail Lacquer', 'Meet LÈCHE. A new flavored beauty brand, starting with nail lacquer. Discover CHERRY 01 and join the list for launch news.'],
-  '/first-taste': ['CHERRY 01 | Cherry-Flavored Nail Lacquer | LÈCHE', 'Cherry-flavored nail lacquer is coming. Meet CHERRY 01: deep-red color, with taste and kissing in mind. Join the launch list.'],
-  '/world': ['Our World | Beauty with Taste | LÈCHE', 'Flavored beauty, for your own pleasure. Meet LÈCHE and the world we’re creating for nails, lips and skin.'],
-  '/early-access': ['Join the Launch List | LÈCHE Flavored Beauty', 'First looks. Launch news. A little LÈCHE in your inbox. Join the list and tell us your taste.'],
-  '/privacy': ['Privacy · LÈCHE', 'How LÈCHE handles early-access signups, optional research and anonymous site metrics.'],
-  '/contact': ['Contact · LÈCHE', 'Get in touch with LÈCHE through our official Instagram, @tasteleche.'],
+  '/': ['LÈCHE | Flavored Beauty. Nails First.', 'Beauty with taste. LÈCHE is bringing cherry flavor to nail lacquer, starting with CHERRY 01. A little more than meets the eye. Join us for the first release.'],
+  '/first-taste': ['CHERRY 01 | Cherry-Flavored Nail Polish | LÈCHE', 'Deep cherry color. A taste for something more. Meet CHERRY 01, our first cherry-flavored nail lacquer, coming to manicures and pedicures. Get launch updates.'],
+  '/world': ['The World of LÈCHE | Beauty with Taste', 'For the pleasure of getting ready. And getting closer. Enter the world of LÈCHE, where color meets flavor. Nails first. Lips and skin are on our mind.'],
+  '/early-access': ['Your First Taste | Join the LÈCHE List', 'Have a taste for what’s next? Join LÈCHE for first looks at CHERRY 01, cherry-flavored nail lacquer, and news of our first release.'],
+  '/privacy': ['Privacy | LÈCHE', 'What we collect, why we keep it, and how to leave the list. Your privacy at LÈCHE, in plain language.'],
+  '/contact': ['Contact LÈCHE | Say Hello', 'Questions, press, or something you have in mind? Find LÈCHE on Instagram at @tasteleche. We’d love to hear from you.'],
   '/studio':['LÈCHE · owner studio','Private launch reporting and shopping preview.'],
   '/confirm-email':['Confirm your email · LÈCHE','Confirm your LÈCHE launch-list email.'],
   '/leave':['Your email preferences · LÈCHE','Manage your LÈCHE email subscription.'],
