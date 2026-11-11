@@ -74,3 +74,7 @@
 - Separated invitation/reassurance, consent/unsubscribe, and pre-launch/final-details lines in the interest sheet. Reused intentional sentence grouping in signup and survey helper copy.
 - Replaced the overlapping email focus outline with a spaced field and visible contained focus treatment; keyboard focus remains visible.
 - Rewrote product details around color, flavor, formulation direction and the first release. Removed "someday" and research-style framing without inventing an ingredient list or completed safety tests.
+
+## November 11: make the product difference explicit
+- Lead with cherry-flavored nail lacquer and name tasting, kissing and intimacy rather than euphemisms that obscure the premise. Everyday manicure/pedicure appeal remains central.
+- Explicitly name edible beauty as the formulation direction being developed, not a validated attribute. Retain one clear product-details note that edibility and suitability for intimate use require testing before launch.
