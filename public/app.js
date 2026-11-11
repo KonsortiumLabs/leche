@@ -11,7 +11,7 @@
     return result;
   }
   function event(name) { if(measurementAllowed) api('/api/event',{event:name,path:page}).catch(()=>{}); }
-  event('page_view'); if(page==='/first-taste') event('product_view');
+  if(!['/studio','/confirm-email','/leave'].includes(page))event('page_view'); if(page==='/first-taste') event('product_view');
   const query=new URLSearchParams(location.search);
   const currentAttribution={source:query.get('utm_source'),medium:query.get('utm_medium'),campaign:query.get('utm_campaign'),referrer:document.referrer,path:page};
   let attribution=currentAttribution;
@@ -51,6 +51,9 @@
     $('#signup-panel').hidden=true;
     if(session.editable) {
       $('#survey-panel').hidden=false;$('#existing-panel').hidden=true;
+      $('#buy-at-price').checked=Boolean(session.purchaseInterest?.interested);
+      $('#send-confirmation').hidden=!session.emailEnabled||session.emailVerified;
+      $('#email-state').textContent=session.emailVerified?'Your email is confirmed.':session.emailEnabled?'Confirm your email to complete your launch-list profile.':'';
       if(session.preferences) {
         const p=session.preferences;
         document.querySelectorAll('[name="flavor"]').forEach(el=>{el.checked=el.value===p.flavor;});
@@ -67,7 +70,7 @@
     if(!email.validity.valid) {$('#email-error').textContent='Please enter a valid email address.';email.setAttribute('aria-invalid','true');email.focus();return;}
     if(!consent.checked) {status.textContent='Please tick the email consent box to join.';consent.setAttribute('aria-invalid','true');consent.focus();return;}
     button.disabled=true;button.textContent='saving your place…';
-    try { await api('/api/signup',{email:email.value,consent:true,company:$('#company').value,attribution});await showSurvey(); }
+    try { await api('/api/signup',{email:email.value,consent:true,company:$('#company').value,attribution});await showSurvey();await requestConfirmation($('#email-state')); }
     catch(error) {status.textContent=error.message;}
     finally {button.disabled=false;button.innerHTML='let me in <span aria-hidden="true">↗</span>';}
   });
@@ -75,7 +78,7 @@
   $('#survey-form')?.addEventListener('submit',async e=>{
     e.preventDefault();const form=e.currentTarget,button=form.querySelector('button'),status=$('#survey-status');
     button.disabled=true;status.textContent='';
-    try {const result=await api('/api/survey',{flavor:$('[name="flavor"]:checked')?.value||null,price:$('#price').value||null,intent:$('#intent').value||null,reservation:$('#reservation').checked});status.textContent=result.message;}
+    try {await api('/api/interest',{interested:$('#buy-at-price').checked});const result=await api('/api/survey',{flavor:$('[name="flavor"]:checked')?.value||null,price:$('#price').value||null,intent:$('#intent').value||null,reservation:$('#reservation').checked});status.textContent=result.message;}
     catch(error){status.textContent=error.message;}
     finally{button.disabled=false;}
   });
@@ -129,5 +132,75 @@
     const reveal=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');reveal.unobserve(e.target);}}),{threshold:.08});
     document.querySelectorAll('.taste-story-heading,.brand-direction>div,.campaign-pair figure,.brand-invitation,.premise>div').forEach(el=>{el.classList.add('scroll-reveal');reveal.observe(el);});
   }
+
+  async function requestConfirmation(target) {
+    if(!target)return;
+    try {
+      const session=await (await fetch('/api/session',{cache:'no-store'})).json();
+      if(!session.editable||!session.emailEnabled||session.emailVerified)return;
+      const result=await api('/api/email/request',{});
+      target.textContent=result.status==='sent'?'Check your inbox to confirm your email.':result.status==='verified'?'Your email is confirmed.':result.status==='disabled'?'':'Your interest is saved. Confirmation email is temporarily unavailable.';
+    }catch{target.textContent='Your interest is saved. We couldn’t send another confirmation email just now.';}
+  }
+  $('#send-confirmation')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;await requestConfirmation($('#email-state'));e.currentTarget.disabled=false;});
+
+  const sheet=$('.interest-sheet');let sheetTrigger=null;
+  if(sheet){
+    function closeSheet(){sheet.close();}
+    document.querySelectorAll('.interest-trigger').forEach(button=>button.addEventListener('click',()=>{
+      sheetTrigger=button;sheet.showModal();document.documentElement.classList.add('sheet-is-open');
+      if(!$('#interest-entry').hidden)$('#interest-email').focus({preventScroll:true});else $('#interest-success h2').focus();
+      const cents=$('.price-proposition').dataset.price;event(`price_intent_${cents}`);
+    }));
+    $('.sheet-close').addEventListener('click',closeSheet);
+    sheet.addEventListener('close',()=>{document.documentElement.classList.remove('sheet-is-open');sheetTrigger?.focus({preventScroll:true});});
+    sheet.addEventListener('click',e=>{if(e.target===sheet){const r=sheet.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeSheet();}});
+    $('#interest-form').addEventListener('submit',async e=>{
+      e.preventDefault();const email=$('#interest-email'),consent=$('#interest-consent'),status=$('#interest-status'),button=e.currentTarget.querySelector('button');
+      status.textContent='';email.removeAttribute('aria-invalid');consent.removeAttribute('aria-invalid');
+      if(!email.validity.valid){status.textContent='Please enter a valid email address.';email.setAttribute('aria-invalid','true');email.focus();return;}
+      if(!consent.checked){status.textContent='Please tick the email consent box.';consent.setAttribute('aria-invalid','true');consent.focus();return;}
+      button.disabled=true;button.textContent='saving your interest…';
+      try{
+        await api('/api/signup',{email:email.value,consent:true,company:$('#interest-company').value,attribution,purchaseIntent:true});
+        const session=await (await fetch('/api/session',{cache:'no-store'})).json();
+        $('#interest-entry').hidden=true;$('#interest-success').hidden=false;
+        $('#interest-saved-message').textContent=session.editable&&session.purchaseInterest?.interested?`Your interest at the proposed $${Number($('.price-proposition').dataset.price)/100} price is saved. No order or payment has been made.`:'Your request is received. If this email is already on the list, it remains subscribed. Existing preferences have not been changed.';
+        $('#interest-success h2').focus({preventScroll:true});await requestConfirmation($('#interest-success .email-status'));
+      }catch(err){status.textContent=err.message;}
+      finally{button.disabled=false;button.innerHTML='save my interest <span aria-hidden="true">↗</span>';}
+    });
+    const priceBox=$('.price-proposition');
+    const priceObserver=new IntersectionObserver(entries=>{if(entries[0].isIntersecting){event(`price_view_${priceBox.dataset.price}`);priceObserver.disconnect();}},{threshold:.5});priceObserver.observe(priceBox);
+  }
+  const emailAction=$('.email-action');
+  if(emailAction){
+    const actionToken=location.hash.slice(1);history.replaceState(null,'',location.pathname);
+    $('#email-action-button').addEventListener('click',async e=>{const b=e.currentTarget,status=$('#email-action-status');b.disabled=true;
+      try{await api(emailAction.dataset.emailAction==='confirm'?'/api/email/confirm':'/api/email/unsubscribe',{token:actionToken});status.textContent=emailAction.dataset.emailAction==='confirm'?'Your email is confirmed. Good to have you.':'You’re unsubscribed. You won’t receive launch updates.';b.hidden=true;}catch(err){status.textContent=err.message;b.disabled=false;}
+    });
+  }
+  // Lightweight perspective; no WebGL bundle, device sensors, or scroll interception.
+  const motion=matchMedia('(prefers-reduced-motion: reduce)'),finePointer=matchMedia('(hover:hover) and (pointer:fine)');
+  const depthObjects=[...document.querySelectorAll('.depth-object')],visibleDepth=new Set();let depthFrame=0;
+  const depthObserver=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)visibleDepth.add(e.target);else visibleDepth.delete(e.target);}),{rootMargin:'80px'});
+  depthObjects.forEach(el=>{
+    depthObserver.observe(el);el.classList.add('depth-active');
+    if(el.classList.contains('hero-object'))el.style.setProperty('--base-angle','5deg');
+    if(el.classList.contains('tease-image'))el.style.setProperty('--base-angle','-3deg');
+    el.addEventListener('pointermove',e=>{
+      if(motion.matches||!finePointer.matches||e.pointerType==='touch')return;
+      const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      el.style.setProperty('--depth-x',`${-y*5}deg`);el.style.setProperty('--depth-ry',`${x*7}deg`);
+    },{passive:true});
+    el.addEventListener('pointerleave',()=>{el.style.setProperty('--depth-x','0deg');el.style.setProperty('--depth-ry','0deg');});
+  });
+  function scrollDepth(){if(depthFrame||motion.matches)return;depthFrame=requestAnimationFrame(()=>{
+    for(const el of visibleDepth){const r=el.getBoundingClientRect(),progress=Math.max(-1,Math.min(1,(innerHeight/2-(r.top+r.height/2))/innerHeight));el.style.setProperty('--depth-y',`${progress*14}px`);if(!finePointer.matches)el.style.setProperty('--depth-x',`${progress*2}deg`);}
+    const photo=$('[data-parallax]');if(photo){const r=photo.parentElement.getBoundingClientRect();if(r.bottom>0)photo.style.setProperty('--photo-y',`${Math.min(30,Math.max(-12,-r.top*.045))}px`);}
+    depthFrame=0;
+  });}
+  addEventListener('scroll',scrollDepth,{passive:true});scrollDepth();
+  motion.addEventListener('change',()=>{if(motion.matches){depthObjects.forEach(el=>{el.style.removeProperty('--depth-y');el.style.removeProperty('--depth-x');el.style.removeProperty('--depth-ry');});}else scrollDepth();});
 
 })();
