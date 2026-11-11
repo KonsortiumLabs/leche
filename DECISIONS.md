@@ -62,3 +62,10 @@
 - Added mobile join-list dock that yields to the primary action and footer, plus full-height mobile navigation with focus management and background inertness.
 - Mapped real shopping, bag, checkout, verified order, and post-purchase states in docs/LAUNCH_PLAN.md. Public action remains pre-launch because no final formula/price/stock/fulfillment is confirmed.
 - Kid Licks is a likely category reference only. Do not copy its ingredient list as LÈCHE's or treat its claims as proof of tasting/intimate-use suitability.
+
+## November 11: dimensional design and $28 validation
+- User chose a beauty-with-taste founding angle; no actual formula/prototype exists. The children's brand is a reference only.
+- One proposed $28 price replaces the assistant's rejected $38 suggestion. No randomized pricing or payments.
+- Added perspective/light effects using original imagery, compact product hierarchy, price-interest bottom sheet, optimized delivery sizes and licensed Manrope font.
+- Added separate purchase-interest records, protected owner reporting, an illustrative shopping preview, and email confirmation/unsubscribe code. Sending stays disabled until provider key, verified sender and mailing address are configured.
+- Apply migrations/0002_launch_validation.sql before deploying the new API. Owner studio uses the existing ADMIN_TOKEN protection.

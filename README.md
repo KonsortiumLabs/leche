@@ -2,7 +2,7 @@
 
 A server-rendered four-page flagship and database-backed early-access application using the original LÈCHE imagery. Public hosting targets **Cloudflare Workers Free + D1 Free**, with a strict **$0 budget** and a free workers.dev URL. Source is owned in this GitHub repository and does not depend on ChatGPT.
 
-**Status:** application built and locally tested; Cloudflare account connection, database migration, public deployment and browser QA are still pending. No paid service has been started. See [free deployment instructions](docs/CLOUDFLARE.md).
+**Status:** public pre-launch flagship is deployed on Cloudflare. The new dimensional design and $28 validation release is locally tested and awaits deployment. Email sending remains disabled until a verified sender and provider are configured.
 
 The Node 24 + local SQLite adapter remains available for local development without installed packages.
 
@@ -15,7 +15,7 @@ npm start
 
 Open http://127.0.0.1:3000. Development with restart-on-edit: `npm run dev`.
 
-The current Codex session denies local server ports. The server launch was therefore blocked here; run the command in your regular terminal. The actual request handlers and SQLite database were tested without a network listener.
+Local preview is available with the command above.
 
 ## Included
 
@@ -93,3 +93,9 @@ Before public launch, run the app and test 375px/390px/768px/1440px layouts, key
 - `docs/` — original kit instructions; `DECISIONS.md` — implementation decisions and status
 
 No third-party runtime packages are used. Supplied campaign/brand assets belong to the user and are not relicensed by this application.
+
+
+## $28 validation release
+Apply `migrations/0002_launch_validation.sql` before deployment. The owner dashboard is `/studio` and uses the existing encrypted `ADMIN_TOKEN`. It reports price-specific interest, verified emails and source totals, with an illustrative shopping preview. Counts are not purchases.
+
+Email is disabled by default. Configure `RESEND_API_KEY`, `EMAIL_FROM` (verified sender) and `EMAIL_POSTAL_ADDRESS` to enable the branded confirmation message. Test real delivery before announcing it. Tokens are hashed, verification expires after 24 hours, and unsubscribe links revoke browser sessions. No email or payment service was activated.
