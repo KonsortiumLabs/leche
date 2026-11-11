@@ -39,3 +39,7 @@ button,input,select{font-family:inherit}.eyebrow{font-size:10px;letter-spacing:.
 @media(prefers-reduced-motion:reduce){.depth-object,.hero-object,.home-tease .tease-image,.home-hero .hero-photo{transform:none!important;transition:none!important;will-change:auto}.interest-sheet[open],.preview-bag[open]{animation:none}.button:active{transform:none}}
 @view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.16s}
 @media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}}
+
+/* Supporting copy breaks at meaning, not at accidental viewport widths. */
+.copy-line{display:block;text-wrap:pretty}.checkbox>span{min-width:0}.checkbox a{white-space:nowrap;text-underline-offset:3px}.sheet-intro,.fine-print,.access-note,.product-facts p{text-wrap:pretty}
+.interest-sheet input[type=email]{margin-top:10px;padding:14px 15px;border:1px solid var(--line);border-radius:8px;background:#fff8f22e}.interest-sheet input[type=email]:focus-visible{outline:2px solid var(--wine);outline-offset:3px}.email-wrap:focus-within{outline:2px solid var(--wine);outline-offset:3px}.email-wrap input:focus-visible{outline:none}.product-facts details p+p{margin-top:12px}.product-facts details p.formula-note{font-size:11px;color:var(--muted)}
