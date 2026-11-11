@@ -3,8 +3,8 @@ import { mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes, createHash, createHmac } from 'node:crypto';
 
-export const CONSENT_VERSION = '2026-11-11-v1';
-export const CONSENT_TEXT = 'Email me LÈCHE development and launch updates. I can unsubscribe at any time.';
+import { CONSENT_VERSION, CONSENT_TEXT } from './shared.mjs';
+export { CONSENT_VERSION, CONSENT_TEXT, toCsv } from './shared.mjs';
 export const sha = value => createHash('sha256').update(value).digest('hex');
 export function openStore(directory) {
   mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -111,14 +111,4 @@ export function openStore(directory) {
     },
     deleteByEmail(email) { return db.prepare('DELETE FROM leads WHERE email=? COLLATE NOCASE').run(email); }
   };
-}
-export function toCsv(rows) {
-  if (!rows.length) return 'email\r\n';
-  const keys = Object.keys(rows[0]);
-  const cell = v => {
-    let s = String(v ?? '');
-    if (/^[=+@\-\t\r\n]/.test(s)) s = "'" + s;
-    return '"' + s.replaceAll('"', '""') + '"';
-  };
-  return [keys.map(cell).join(','), ...rows.map(row => keys.map(k => cell(row[k])).join(','))].join('\r\n');
 }

@@ -1,4 +1,4 @@
-import { CONSENT_TEXT } from './store.mjs';
+import { CONSENT_TEXT } from './shared.mjs';
 
 export const routes = ['/', '/first-taste', '/world', '/early-access', '/privacy', '/contact'];
 export const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
