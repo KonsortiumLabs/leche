@@ -100,3 +100,21 @@ test('concurrent D1 duplicate signups create exactly one owner and one signup ev
     assert.equal((await d1Store(db).stats()).metrics[0].count,1);
   }finally{db.sqlite.close();}
 });
+
+test('analytics validates actions, ignores privacy opt-outs and bots, and keeps reporting private',async()=>{
+ const db=binding(':memory:'),env={DB:db,ADMIN_TOKEN:'a'.repeat(48),SITE_URL:origin};
+ try{
+  for(const headers of [{dnt:'1'},{'sec-gpc':'1'},{'user-agent':'Googlebot'}])assert.equal((await request(env,'/api/event',{data:{event:'page_view',path:'/'},headers})).status,200);
+  assert.equal(db.sqlite.prepare('SELECT count(*) n FROM metrics').get().n,0);
+  assert.equal((await request(env,'/api/event',{data:{event:'signup',path:'/early-access'}})).status,400);
+  assert.equal((await request(env,'/api/event',{data:{event:'gallery_engaged',path:'/'}})).status,400);
+  assert.equal((await request(env,'/api/event',{data:{event:'signup_start',path:'/early-access',email:'discard@example.test'}})).status,200);
+  assert.equal(db.sqlite.prepare('SELECT count FROM metrics').get().count,1);
+  assert.equal((await request(env,'/api/admin/stats')).status,401);
+  const stats=await (await request(env,'/api/admin/stats',{headers:{authorization:'Bearer '+env.ADMIN_TOKEN}})).json();
+  assert.equal(stats.measurement_window.days,30);assert.ok(Array.isArray(stats.campaigns));
+  assert.match((await request(env,'/api/health')).headers.get('x-robots-tag'),/noindex/);
+  assert.match(await (await request(env,'/studio')).text(),/noindex,nofollow/);
+  const preview=await worker.fetch(new Request('https://preview.example/'),env);assert.match(await preview.text(),/noindex,nofollow/);
+ }finally{db.sqlite.close();}
+});
