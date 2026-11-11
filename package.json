@@ -1,0 +1,15 @@
+{
+  "name": "leche-flagship",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent LÈCHE flagship and early-access validation application",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/pages.mjs && node --check public/app.js && node --check scripts/admin.mjs",
+    "test": "node --test test/*.test.mjs",
+    "stats": "node scripts/admin.mjs stats"
+  }
+}
