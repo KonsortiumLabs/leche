@@ -69,3 +69,8 @@
 - Added perspective/light effects using original imagery, compact product hierarchy, price-interest bottom sheet, optimized delivery sizes and licensed Manrope font.
 - Added separate purchase-interest records, protected owner reporting, an illustrative shopping preview, and email confirmation/unsubscribe code. Sending stays disabled until provider key, verified sender and mailing address are configured.
 - Apply migrations/0002_launch_validation.sql before deploying the new API. Owner studio uses the existing ADMIN_TOKEN protection.
+
+## November 11: sentence hierarchy and launch copy
+- Separated invitation/reassurance, consent/unsubscribe, and pre-launch/final-details lines in the interest sheet. Reused intentional sentence grouping in signup and survey helper copy.
+- Replaced the overlapping email focus outline with a spaced field and visible contained focus treatment; keyboard focus remains visible.
+- Rewrote product details around color, flavor, formulation direction and the first release. Removed "someday" and research-style framing without inventing an ingredient list or completed safety tests.

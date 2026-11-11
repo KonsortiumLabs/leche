@@ -21,3 +21,7 @@
 - Flavored beauty is the broader identity: nails first, lip gloss and body glazes as future directions, not available products. Real-fruit flavor and naturally derived ingredients are formulation goals until confirmed.
 - Sensual and intimate, but everyday beauty and women’s own enjoyment remain central. Do not position solely as a sex-play brand or assert unverified edible/intimate-use safety.
 - No em dashes in consumer copy. Add 🍒 after “a little more than meets the eye.” Link @tasteleche prominently.
+
+## Copy and readability preference — 2026-11-11
+- Break supporting form copy into intentional sentence groups: invitation, reassurance, and fine print should each start on their own line when they convey different jobs. Apply to consent/privacy, signup notes, and survey helper text. Allow natural wrapping within each group on small screens; never force nowrap paragraphs.
+- Keep consumer copy confident, concise and launch-oriented. Avoid hypothetical research language ("someday", "helps us decide what to make", repeated "ambition"). Describe the desired formulation direction without fabricating specific ingredients, completed testing, or availability.
