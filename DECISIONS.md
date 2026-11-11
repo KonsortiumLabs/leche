@@ -78,3 +78,7 @@
 ## November 11: make the product difference explicit
 - Lead with cherry-flavored nail lacquer and name tasting, kissing and intimacy rather than euphemisms that obscure the premise. Everyday manicure/pedicure appeal remains central.
 - Explicitly name edible beauty as the formulation direction being developed, not a validated attribute. Retain one clear product-details note that edibility and suitability for intimate use require testing before launch.
+
+## November 11: recognizable browser favicon
+- Use the enlarged original sculptural L extracted from the approved raster wordmark, cream on oxblood. Full logo and campaign assets remain unchanged.
+- Dedicated 16, 32 and 48 pixel PNG favicons plus a 180 pixel Apple touch icon, with new filenames to refresh browser caches. Source crop is embedded in favicon-l.svg.
