@@ -1,3 +1,5 @@
+import { validEvent, isBot } from './analytics.mjs';
+import { robots, sitemap, PUBLIC_ORIGIN } from './seo.mjs';
 import { OFFER, PRICE_EVENTS } from './offer.mjs';
 import { emailConfigured, sendWelcome } from './email.mjs';
 import { createServer } from 'node:http';
@@ -54,7 +56,7 @@ export function createApp(options={}) {
     res.setHeader('X-Frame-Options','DENY');
     res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=(), payment=()');
-    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
+    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
     if(productionSecure) res.setHeader('Strict-Transport-Security','max-age=31536000');
     const send=(status,data,type='application/json; charset=utf-8')=>{
       res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store'});
@@ -66,6 +68,7 @@ export function createApp(options={}) {
       const url=new URL(req.url,`http://${host}`); const path=url.pathname;
       const ip=trustProxy ? (req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress) : req.socket.remoteAddress;
       if(path.startsWith('/api/')) {
+        res.setHeader('X-Robots-Tag','noindex, nofollow');
         if(req.method==='POST') {
           const expected=siteUrl || `http://${host}`;
           if(req.headers.origin!==expected || req.headers['sec-fetch-site']==='cross-site') return send(403,{error:'Please submit from the LÈCHE website.'});
@@ -86,7 +89,7 @@ export function createApp(options={}) {
           if(input.consent!==true) return send(400,{error:'Please tick the email consent box to join.',field:'consent'});
           if(input.company) return send(400,{error:'We couldn’t accept that submission. Please try again.'});
           if(input.purchaseIntent!==undefined&&typeof input.purchaseIntent!=='boolean')return send(400,{error:'Invalid product interest.'});
-          const result=store.signup(email,attribution(input.attribution),cookie(req));
+          const result=store.signup(email,attribution(req.headers.dnt==='1'||req.headers['sec-gpc']==='1'?{}:input.attribution),cookie(req));
           if(result.token) res.setHeader('Set-Cookie',`leche_session=${result.token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${productionSecure?'; Secure':''}`);
           else if(cookie(req)) res.setHeader('Set-Cookie',`leche_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${productionSecure?'; Secure':''}`);
           // Identical response for new and existing email records. Ownership is checked separately using the cookie.
@@ -136,10 +139,10 @@ export function createApp(options={}) {
           return send(200,{ok:true,message:'You’re unsubscribed. Your email will no longer be included in updates.'});
         }
         if(path==='/api/event' && req.method==='POST') {
-          if(req.headers.dnt==='1' || req.headers['sec-gpc']==='1') return send(200,{ok:true});
+          if(req.headers.dnt==='1' || req.headers['sec-gpc']==='1' || isBot(req.headers['user-agent'])) return send(200,{ok:true});
           if(!store.rate(ip,'events',40,60000)) return send(429,{error:'Please slow down.'});
           const input=await body(req);
-          if(!['page_view','product_view','share',...PRICE_EVENTS].includes(input.event) || !allowedPaths.has(input.path)) return send(400,{error:'Invalid event.'});
+          if(!validEvent(input.event,input.path) || !allowedPaths.has(input.path)) return send(400,{error:'Invalid event.'});
           if(input.event==='product_view' && input.path!=='/first-taste') return send(400,{error:'Invalid product event.'});
           store.metric(input.event,input.path); return send(200,{ok:true});
         }
@@ -153,8 +156,8 @@ export function createApp(options={}) {
         return send(404,{error:'Endpoint not found.'});
       }
       if(!['GET','HEAD'].includes(req.method)) {res.setHeader('Allow','GET, HEAD');return send(405,'Method not allowed.','text/plain');}
-      if(path==='/robots.txt') return send(200,siteUrl?`User-agent: *\nDisallow: /api/\nDisallow: /studio\nDisallow: /confirm-email\nDisallow: /leave\nSitemap: ${siteUrl}/sitemap.xml\n`:'User-agent: *\nDisallow: /\n','text/plain');
-      if(path==='/sitemap.xml') return send(200,`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${siteUrl?routes.map(p=>`<url><loc>${siteUrl}${p==='/'?'':p}</loc></url>`).join(''):''}</urlset>`,'application/xml');
+      if(path==='/robots.txt')return send(200,robots(siteUrl),'text/plain');
+      if(path==='/sitemap.xml')return send(200,siteUrl?sitemap(siteUrl):'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>','application/xml');
       if(path.startsWith('/assets/') || ['/styles.css','/app.js','/depth.css','/studio.js'].includes(path)) {
         let decoded; try { decoded=decodeURIComponent(path); } catch { return send(400,'Bad path','text/plain'); }
         const file=resolve(publicDir,'.'+decoded);

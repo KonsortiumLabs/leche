@@ -103,7 +103,8 @@ export function openStore(directory) {
           WHERE flavor IS NOT NULL AND unsubscribed_at IS NULL GROUP BY flavor`).all(),
         prices: db.prepare(`SELECT price,COUNT(*) count FROM surveys JOIN leads ON leads.id=lead_id
           WHERE price IS NOT NULL AND unsubscribed_at IS NULL GROUP BY price`).all(),
-        metrics: db.prepare('SELECT * FROM metrics ORDER BY day DESC,event,path LIMIT 500').all(),
+        metrics: db.prepare("SELECT * FROM metrics WHERE day >= date('now','-29 days') AND day <= date('now') ORDER BY day DESC,event,path").all(),
+        measurement_window:{days:30,timezone:'UTC'},
         note: 'Email addresses are unverified. Reservations are nonbinding. Pageviews are events, not unique people.'
       };
     },

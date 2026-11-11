@@ -83,7 +83,8 @@ export function d1Store(db) {
           WHERE flavor IS NOT NULL AND unsubscribed_at IS NULL GROUP BY flavor`),
         prices:await all(`SELECT price,COUNT(*) count FROM surveys JOIN leads ON leads.id=lead_id
           WHERE price IS NOT NULL AND unsubscribed_at IS NULL GROUP BY price`),
-        metrics:await all('SELECT * FROM metrics ORDER BY day DESC,event,path LIMIT 500'),
+        metrics:await all("SELECT * FROM metrics WHERE day >= date('now','-29 days') AND day <= date('now') ORDER BY day DESC,event,path"),
+        measurement_window:{days:30,timezone:'UTC'},
         note:'Email addresses are unverified. Reservations are nonbinding. Pageviews are events, not unique people.'
       };
     },

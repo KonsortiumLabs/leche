@@ -1,3 +1,5 @@
+import { validEvent, isBot } from './analytics.mjs';
+import { robots, sitemap, PUBLIC_ORIGIN } from './seo.mjs';
 import { OFFER, PRICE_EVENTS } from './offer.mjs';
 import { emailConfigured, sendWelcome } from './email.mjs';
 import { renderPage, routes, utilityRoutes } from './pages.mjs';
@@ -41,7 +43,7 @@ export default {
       'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',
       'Referrer-Policy':'strict-origin-when-cross-origin',
       'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()',
-      'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+      'Content-Security-Policy':"default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
       'Cache-Control':'no-store'
     });
     const send=(status,data,type='application/json; charset=utf-8')=>{
@@ -50,17 +52,19 @@ export default {
     };
     try {
       const url=new URL(req.url),path=url.pathname;
-      const siteUrl=env.SITE_URL||url.origin;
+      const siteUrl=env.SITE_URL||PUBLIC_ORIGIN;
       if(new URL(siteUrl).origin!==siteUrl||!/^https?:\/\//.test(siteUrl))throw new Error('Invalid SITE_URL');
+      const publicOrigin=url.origin===siteUrl;
       const secure=url.protocol==='https:';
       if(secure)headers.set('Strict-Transport-Security','max-age=31536000');
       const setCookie=value=>headers.set('Set-Cookie',`leche_session=${value||''}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${value?2592000:0}${secure?'; Secure':''}`);
       if(path.startsWith('/api/')) {
+        headers.set('X-Robots-Tag','noindex, nofollow');
         // The platform supplies CF-Connecting-IP; never trust client-forwarded IPs.
         const ip=req.headers.get('cf-connecting-ip')||'unknown';
-        if(req.method==='POST' && (req.headers.get('origin')!==siteUrl||req.headers.get('sec-fetch-site')==='cross-site'))
+        if(req.method==='POST' && (req.headers.get('origin')!==(env.SITE_URL||url.origin)||req.headers.get('sec-fetch-site')==='cross-site'))
           return send(403,{error:'Please submit from the LÈCHE website.'});
-        if(path==='/api/event'&&req.method==='POST'&&(req.headers.get('dnt')==='1'||req.headers.get('sec-gpc')==='1'))return send(200,{ok:true});
+        if(path==='/api/event'&&req.method==='POST'&&(req.headers.get('dnt')==='1'||req.headers.get('sec-gpc')==='1'||isBot(req.headers.get('user-agent'))))return send(200,{ok:true});
         const store=d1Store(env.DB);
         if(req.method==='POST'&&!await store.rate(ip,'all-post',100))return send(429,{error:'A little pause. Please try again in a minute.'});
         if(path==='/api/health'&&req.method==='GET'){await store.health();return send(200,{status:'ok'});}
@@ -74,7 +78,7 @@ export default {
           if(input.consent!==true)return send(400,{error:'Please tick the email consent box to join.',field:'consent'});
           if(input.company)return send(400,{error:'We couldn’t accept that submission. Please try again.'});
           if(input.purchaseIntent!==undefined&&typeof input.purchaseIntent!=='boolean')return send(400,{error:'Invalid product interest.'});
-          const result=await store.signup(email,attribution(input.attribution),token(req));
+          const result=await store.signup(email,attribution(req.headers.get('dnt')==='1'||req.headers.get('sec-gpc')==='1'?{}:input.attribution),token(req));
           if(result.token||token(req))setCookie(result.token);
           const owned=result.token?await store.session(result.token):null;
           if(owned&&input.purchaseIntent===true)await store.savePurchaseInterest(owned.id,true);
@@ -123,7 +127,7 @@ export default {
         if(path==='/api/event'&&req.method==='POST') {
           if(!await store.rate(ip,'events',40))return send(429,{error:'Please slow down.'});
           const input=await body(req);
-          if(!['page_view','product_view','share',...PRICE_EVENTS].includes(input.event)||!allowedPaths.has(input.path))return send(400,{error:'Invalid event.'});
+          if(!validEvent(input.event,input.path)||!allowedPaths.has(input.path))return send(400,{error:'Invalid event.'});
           if(input.event==='product_view'&&input.path!=='/first-taste')return send(400,{error:'Invalid product event.'});
           await store.metric(input.event,input.path);return send(200,{ok:true});
         }
@@ -137,11 +141,11 @@ export default {
         return send(404,{error:'Endpoint not found.'});
       }
       if(!['GET','HEAD'].includes(req.method)){headers.set('Allow','GET, HEAD');return send(405,'Method not allowed.','text/plain');}
-      if(path==='/robots.txt')return send(200,`User-agent: *\nDisallow: /api/\nDisallow: /studio\nDisallow: /confirm-email\nDisallow: /leave\nSitemap: ${siteUrl}/sitemap.xml\n`,'text/plain');
-      if(path==='/sitemap.xml')return send(200,`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map(p=>`<url><loc>${siteUrl}${p==='/'?'':p}</loc></url>`).join('')}</urlset>`,'application/xml');
+      if(path==='/robots.txt')return send(200,robots(publicOrigin?siteUrl:''),'text/plain');
+      if(path==='/sitemap.xml')return send(200,siteUrl?sitemap(siteUrl):'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>','application/xml');
       if(path.length>1&&path.endsWith('/')){headers.set('Location',path.slice(0,-1)+url.search);return new Response(null,{status:308,headers});}
       // Existing static files are served by Cloudflare's asset layer before this handler.
-      return send(routes.includes(path)||utilityRoutes.includes(path)?200:404,renderPage(path,siteUrl),'text/html; charset=utf-8');
+      return send(routes.includes(path)||utilityRoutes.includes(path)?200:404,renderPage(path,publicOrigin?siteUrl:''),'text/html; charset=utf-8');
     } catch(e) {
       // Log no request body, email, cookie, authorization header, or raw database error.
       if(!e.status)console.error('LÈCHE request failed; check D1 binding, migration and quota.');

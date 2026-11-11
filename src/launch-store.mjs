@@ -25,6 +25,11 @@ export function launchStore(db) {
           COALESCE(SUM(p.interested=1 AND l.email_verified=1),0) verified_interested
           FROM purchase_interest p JOIN leads l ON l.id=p.lead_id
           WHERE l.unsubscribed_at IS NULL AND p.offer_revision=?`,OFFER.revision),
+        campaigns:(await q(`SELECT COALESCE(l.utm_source,l.referrer_host,'direct / unknown') source,
+          COALESCE(l.utm_medium,'unassigned') medium,COALESCE(l.utm_campaign,'unassigned') campaign,
+          COUNT(*) signups,COALESCE(SUM(p.interested=1 AND p.offer_revision=?),0) price_interested
+          FROM leads l LEFT JOIN purchase_interest p ON p.lead_id=l.id WHERE l.unsubscribed_at IS NULL
+          GROUP BY source,medium,campaign ORDER BY signups DESC LIMIT 50`,OFFER.revision).all()).results,
         sources:(await q(`SELECT COALESCE(l.utm_source,l.referrer_host,'direct / unknown') source,
           COUNT(*) signups,COALESCE(SUM(l.email_verified),0) verified,
           COALESCE(SUM(p.interested=1 AND p.offer_revision=?),0) price_interested
