@@ -8,9 +8,9 @@ export const SHARE_CARDS = {
   '/early-access': ['early-access', 'Join the LÈCHE launch list for the first taste of CHERRY 01']
 };
 const SOCIAL_COPY = {
-  '/': ['LÈCHE. Beauty with taste.', 'Not scented. Flavored. Cherry-flavored nail lacquer is coming. A little more than meets the eye. 🍒'],
+  '/': ['LÈCHE. Beauty with taste.', 'Not scented. Flavored. Cherry-flavored nail lacquer is coming. A little more than meets the eye 🍒'],
   '/first-taste': ['CHERRY 01. Your first taste of LÈCHE.', 'Deep cherry color. A taste for something more. Our first flavored nail lacquer is coming.'],
-  '/world': ['A little more than meets the eye. 🍒', 'For the pleasure of getting ready. And getting closer. Welcome to the world of LÈCHE.'],
+  '/world': ['A little more than meets the eye 🍒', 'For the pleasure of getting ready. And getting closer. Welcome to the world of LÈCHE.'],
   '/early-access': ['Be there for the first taste.', 'CHERRY 01 is coming. Join LÈCHE for first looks and news of the first release.']
 };
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,7 +19,7 @@ export function seoHead(path, origin, title, description) {
   const canonical = origin && (SEARCH_PAGES.includes(path)||path==='/privacy') ? `${origin}${path==='/'?'':path}` : null;
   const [card,alt]=SHARE_CARDS[path]||SHARE_CARDS['/'];
   const [socialTitle,socialDescription]=SOCIAL_COPY[path]||[title,description];
-  const image=`${origin||''}/assets/social/${card}-v1.jpg`;
+  const image=`${origin||''}/assets/social/${card}-v2.jpg`;
   const tag=(property,content,name=false)=>`<meta ${name?'name':'property'}="${property}" content="${escape(content)}">`;
   let head=`<title>${escape(title)}</title>${tag('description',description,true)}${tag('robots',indexable?'index,follow,max-image-preview:large':origin&&path==='/privacy'?'noindex,follow':'noindex,nofollow',true)}`;
   if(canonical)head+=`<link rel="canonical" href="${escape(canonical)}">${tag('og:url',canonical)}`;
@@ -35,7 +35,7 @@ export function seoHead(path, origin, title, description) {
   return head;
 }
 export function sitemap(origin) {
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${SEARCH_PAGES.map(path=>`<url><loc>${escape(origin)}${path==='/'?'':path}</loc>${SHARE_CARDS[path]?`<image:image><image:loc>${escape(origin)}/assets/social/${SHARE_CARDS[path][0]}-v1.jpg</image:loc></image:image>`:''}</url>`).join('')}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${SEARCH_PAGES.map(path=>`<url><loc>${escape(origin)}${path==='/'?'':path}</loc>${SHARE_CARDS[path]?`<image:image><image:loc>${escape(origin)}/assets/social/${SHARE_CARDS[path][0]}-v2.jpg</image:loc></image:image>`:''}</url>`).join('')}</urlset>`;
 }
 export function robots(origin) {
   // Let crawlers read noindex on utility pages. Their APIs remain disallowed.
