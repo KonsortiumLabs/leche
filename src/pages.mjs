@@ -9,7 +9,7 @@ export const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, c => ({'&':'
 const asset = name => `/assets/feed/${name}`;
 export const photos = {
   glass: asset('row-2-right-hand-glass.jpg'), bottle: asset('row-2-middle-cherry-01-bottle.jpg'),
-  nail: asset('row-1-right-nail-application.jpg'), feet: asset('row-2-left-pedicure.jpg'),
+  nail: asset('nail-application-approved-20261111.png'), feet: asset('row-2-left-pedicure.jpg'),
   taste: asset('row-1-left-taste.jpg'), wordmark: asset('row-1-middle-wordmark.jpg')
 };
 // Deliberate sentence breaks keep supporting copy readable at every width.
@@ -17,6 +17,7 @@ const lines = (...parts) => parts.map(part => `<span class="copy-line">${part}</
 const consentCopy = () => lines(...CONSENT_TEXT.split(' I can').map((part, i) => i ? `I can${part} <a href="/privacy">privacy</a>` : part));
 const link = (href, label, cls='button') => `<a class="${cls}" href="${href}">${label}</a>`;
 const img = (src, alt, cls='', priority=false, sizes='(max-width:760px) 100vw, 50vw') => {
+  if(src.endsWith('.png')) return `<img class="${cls}" src="${src}" alt="${alt}" width="1254" height="1254" ${priority ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async">`;
   const base=src.replace('/assets/feed/','/assets/optimized/').replace('.jpg','');
   return `<img class="${cls}" src="${src}" srcset="${base}-160.jpg 160w, ${base}-480.jpg 480w, ${base}-768.jpg 768w, ${src} 1080w" sizes="${sizes}" alt="${alt}" width="1080" height="1080" ${priority ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async">`;
 };
