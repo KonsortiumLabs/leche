@@ -48,3 +48,11 @@ test('requested supporting phrases start their own responsive lines and logo use
  assert.ok(product.includes('0.294118  0 0 0 0 0.050980  0 0 0 0 0.105882'));
  assert.ok(product.includes('id="brand-light"'));
 });
+
+
+test("approved nail replacement is used without retired image or stale srcset", () => {
+  for (const route of routes) {
+    const html = renderPage(route);
+    assert.ok(!html.includes("row-1-right-nail-application"), route);
+  }
+});
