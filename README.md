@@ -1,8 +1,12 @@
 # LÈCHE — independent digital flagship
 
-A complete, server-rendered website and database-backed early-access application. It runs on Node.js 24+ with no installed packages, build service, ChatGPT account, Sites hosting, paid API or frontend framework required.
+A server-rendered four-page flagship and database-backed early-access application using the original LÈCHE imagery. Public hosting targets **Cloudflare Workers Free + D1 Free**, with a strict **$0 budget** and a free workers.dev URL. Source is owned in this GitHub repository and does not depend on ChatGPT.
 
-## Run
+**Status:** application built and locally tested; Cloudflare account connection, database migration, public deployment and browser QA are still pending. No paid service has been started. See [free deployment instructions](docs/CLOUDFLARE.md).
+
+The Node 24 + local SQLite adapter remains available for local development without installed packages.
+
+## Run locally
 
 ```sh
 cd leche
@@ -32,12 +36,14 @@ Custom 404, responsive navigation, reduced-motion support, labeled forms, status
 2. The server returns success only after the database operation. Existing emails are deduplicated; their preferences cannot be edited by merely entering the address again.
 3. A 30-day HttpOnly / SameSite=Strict cookie grants editing access for the newly created record in that browser. HTTPS production cookies also use Secure.
 4. `POST /api/survey` saves optional flavor, hypothetical USD price, purchase intent and nonbinding reservation separately. Updates do not inflate response or reservation counts.
-5. Records survive process restart in `data/leche.sqlite`. The database directory is private and ignored by Git. It must be retained and backed up by the hosting operator.
+5. Cloudflare records persist in D1 across deploys. The local Node adapter stores records in `data/leche.sqlite`, ignored by Git. Use the correct operator tools for the chosen backend.
 6. `/privacy` can unsubscribe the current browser’s signup. Other access, correction, unsubscribe and deletion requests go through @tasteleche and require operator identity verification.
 
 There is **no payment, order, allocation, inventory, manufactured product, validated formula, confirmed launch date or email verification/delivery integration**. Signups are unverified opt-ins. No confirmation email is promised or sent. A mailing provider can import the CSV after operational setup; only active consenting records may receive updates, and every email must support unsubscribe. Resubscription or cross-device edits require an identity-verified operator workflow until an email-verification provider is added.
 
 ## Review and export
+
+For Cloudflare D1 use the owner dashboard or the authenticated API described in [CLOUDFLARE.md](docs/CLOUDFLARE.md). The following CLI commands apply **only to the local Node database**:
 
 ```sh
 npm run stats
@@ -53,27 +59,11 @@ For a read-only admin API, set a random `ADMIN_TOKEN` of at least 32 characters 
 
 Metrics distinguish raw page/product/share events, opt-ins, verified opt-ins (currently zero), survey responses and nonbinding reservations. Pageviews are not unique people. Do not interpret stated intent or an unverified email as a purchase.
 
-## Host independently
+## Host independently for $0
 
-`render.yaml` provides a proposed one-service Render deployment with a 1 GB persistent disk. It has not been applied and no hosting charge has been authorized. After the source is in its own GitHub repository, a Render Blueprint can deploy it and provide a public HTTPS address. The app reads Render's automatic `RENDER_EXTERNAL_URL`; no domain purchase is needed. The configured disk preserves signups across deploys. Browser sign-in/account authorization is still needed for GitHub repository creation and Render deployment.
+Follow [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md). `wrangler.jsonc` uses the same pages and assets with the Worker backend in `src/worker.mjs` and persistent D1 storage in `src/d1-store.mjs`. Keep Workers and D1 on their free plans. Do not activate billing or buy a domain.
 
-Use any Node 24 host with a **persistent local disk**, or a single Docker container with a persistent volume. This SQLite build is not for ephemeral serverless functions or multiple independent replicas.
-
-```sh
-cp .env.example .env
-# Edit .env with your real SITE_URL, then:
-node --env-file=.env src/server.mjs
-```
-
-For Docker:
-
-```sh
-SITE_URL=https://YOUR-CONFIRMED-DOMAIN docker compose up -d --build
-```
-
-Replace the example with an origin you own. Put a TLS reverse proxy in front of the loopback-bound port 3000. Set `TRUST_PROXY=true` only if that proxy overwrites X-Forwarded-For and the application cannot be reached directly. Otherwise leave it false; rate limiting will apply to the proxy as a whole. Persist `/app/data`; schedule encrypted/offsite backups with the `backup` command. Docker image creation was not run in this restricted session.
-
-`SITE_URL` controls canonical URLs, social image URLs, sitemap and accepted form Origin. Production refuses to run without an HTTPS origin. Without a configured origin, local pages are noindex and robots disallows crawling. Configure the actual origin before public launch; do not invent domain ownership.
+The earlier paid Render proposal was not deployed and `render.yaml` is now disabled. Docker and the local Node server are optional development/self-hosting adapters, not required for Cloudflare.
 
 ## Checks
 
@@ -82,7 +72,7 @@ npm run check
 npm test
 ```
 
-Tests invoke the real HTTP handler without opening a port and exercise SQLite: validation, consent, CSRF/origin checks, honeypot, deduplication, record ownership, survey enum checks, idempotency, restart persistence, unsubscribe, protected CSV, deletion, rate limits, DNT, production metadata and secure cookies. They use temporary databases and never seed production leads.
+Tests invoke the real Node and Worker handlers without opening a port. Worker tests use actual SQLite SQL through a D1 binding adapter and cover atomic rollback and concurrent duplicate signups. They also exercise: validation, consent, CSRF/origin checks, honeypot, deduplication, record ownership, survey enum checks, idempotency, restart persistence, unsubscribe, protected CSV, deletion, rate limits, DNT, production metadata and secure cookies. They use temporary databases and never seed production leads.
 
 **Not completed here:** live HTTP/browser tests, mobile screenshots, Lighthouse/axe, Docker build, public deployment/domain, email provider and email verification. Browser QA was blocked by session network/preview policy. These are verification/setup limitations, not simulated integrations.
 
@@ -94,7 +84,10 @@ Before public launch, run the app and test 375px/390px/768px/1440px layouts, key
 - `public/styles.css` — responsive art direction and interaction styles
 - `public/app.js` — accessible forms, navigation, sharing and minimal measurement
 - `src/server.mjs` — HTTP/static routes, API validation, headers and authorization
-- `src/store.mjs` — SQLite schema, durable records, sessions, aggregation and export
+- `src/store.mjs` — local Node SQLite adapter
+- `src/worker.mjs` — public Cloudflare request handler
+- `src/d1-store.mjs` — persistent D1 records, sessions, aggregation and export
+- `migrations/0001_early_access.sql` — D1 schema, applied before live signup testing
 - `scripts/admin.mjs` — private operator workflow
 - `test/app.test.mjs` — request-handler and persistence checks
 - `docs/` — original kit instructions; `DECISIONS.md` — implementation decisions and status

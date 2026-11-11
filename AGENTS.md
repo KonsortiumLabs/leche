@@ -10,3 +10,8 @@
 - Four primary routes: Home, First Taste, The World, Early Access. Not one enormous scrolling page; not bloated.
 - Copy: concise, seductive, confidently playful, lowercased campaign tone, differentiated but not overly explicit. Approved phrases include "pleasure looks good on you 🍒", "a little more than meets the eye.", "not scented. flavored." (positioning only).
 - Implement code, test responsiveness/accessibility/performance and real data persistence, state blockers accurately. Keep a DECISIONS.md file; preserve user-approved decisions.
+
+## Hosting budget — confirmed 2026-11-11
+- Hard budget: $0. This is a concept. Do not activate paid plans, enter payment details, purchase domains, or enable usage billing.
+- Target Cloudflare Workers Free + D1 Free, using a free workers.dev address. Preserve all original imagery and the real signup flow.
+- The Render proposal was not deployed and has been disabled.

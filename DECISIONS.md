@@ -12,15 +12,15 @@
 
 ## Implementation choices — awaiting ordinary design review
 
-- Dependency-free Node 24 server-rendered application with SQLite. No ChatGPT runtime, login or hosting dependency. The recommended Next.js stack was not mandatory; package network access was unavailable and a native runtime allows complete persistent functionality without third-party credentials.
+- Shared server-rendered pages with a Cloudflare Worker + D1 backend for public hosting; the dependency-free Node 24 + SQLite server remains for local development. No ChatGPT runtime, login or hosting dependency. The recommended Next.js stack was not mandatory; package network access was unavailable and a native runtime allows complete persistent functionality without third-party credentials.
 - Current UI colors: warm ivory #f3eade, wine #4b0d1b, champagne blush #e3c8bf. Supporting typography uses the locally available Helvetica Neue / Arial stack. No substitute font is used as the logo.
 - Logo uses the exact original raster in a CSS crop of the surrounding blank canvas. No tracing, vectorization, regeneration or edited raster was made. Original bytes are retained.
 - Homepage leads with the hand/glass campaign and concise concept explanation; First Taste uses the exact bottle and manicure/pedicure images; The World carries the original wordmark campaign and editorial imagery. Mouth/cherry imagery appears once in The World.
 - Third-row candidate imagery remains included in source assets for review but is not published in the visitor experience. Reference screenshots/moodboards are not presented as actual posts, metrics or products.
-- All records are stored locally in a private SQLite database, suitable for one persistent Node instance or container volume. Do not deploy this design to ephemeral filesystem/serverless hosting.
+- Public-hosting records use D1. The optional local Node server uses private SQLite files; that adapter requires a persistent local disk.
 - Signup requires explicit email consent. Surveys and nonbinding reservations are optional. Email addresses are unverified; they are never counted as confirmed customers or sales.
 - Duplicate signup returns a generic response. Only an opaque, HttpOnly session issued for a newly created lead permits survey edits. Typing an existing email cannot obtain editing access. Unsubscribed addresses are not silently reactivated.
-- The operator can review/export data through a local CLI or optional bearer-protected read-only API. No public admin account or guessed credentials.
+- The operator can review/export D1 records through the Cloudflare console or optional bearer-protected read-only API. The CLI applies only to the local Node database. No public admin account or guessed credentials.
 - Analytics store daily event totals; no third-party scripts, analytics cookies or visitor identifiers. DNT and GPC suppress client measurement. First-touch campaign data uses tab-scoped session storage; server strips full referrer/query information.
 - Official contact is Instagram @tasteleche. No domain, business email or address is invented.
 
@@ -33,10 +33,14 @@
 - Browser visual QA was attempted; local file preview was blocked by browser policy. No browser screenshot, Lighthouse score or completed mobile/browser test is claimed.
 - Public hosting/domain connection, email delivery/verification, actual browser QA and production traffic testing remain outstanding.
 
-## Independent public deployment preparation — 2026-11-11
+## Public deployment status — 2026-11-11
 
-- User explicitly requested a public, shareable running website.
-- Prepared a Render Blueprint for one Node 24 service with a 1 GB persistent volume. This is a proposed paid deployment, not an applied resource or accepted charge.
-- The application accepts Render's documented RENDER_EXTERNAL_URL as its canonical/form origin when SITE_URL is not set. This avoids hardcoding or inventing a deployment URL.
-- Render-specific deployment trusts its documented X-Forwarded-For header. Do not reuse TRUST_PROXY=true on directly exposed untrusted servers.
-- GitHub connector identifies KonsortiumLabs but exposes no repository-creation action. The browser is signed out of GitHub and Render, so creation, upload and deployment are waiting for account access. Existing unrelated repositories were not modified.
+- Source and original images are in the user's public repository: https://github.com/KonsortiumLabs/leche. The original 38 files were verified against local Git object hashes after browser upload.
+- User rejected hosting charges and clarified a hard $0 budget. No Render resource was deployed, no card was submitted, and the paid Blueprint has been retired with an empty services list.
+- Public target is Cloudflare Workers Free + D1 Free, with a free workers.dev address. No paid-plan upgrade, purchased domain, paid storage or email provider is authorized.
+- Worker uses standard Request/Response and Web Crypto. No Node filesystem, persistent server, or runtime package is required. Original page templates and campaign files are shared unchanged.
+- D1 signup batches atomically insert the lead, ownership session and signup metric. Concurrent duplicates cannot claim an existing record or inflate counts. SQL tests verify rollback after an injected failure.
+- Abuse prevention keeps short-lived HMAC hashes in D1. The signing key is generated with Web Crypto and stored privately in D1. No secrets are shipped to the browser or committed to Git.
+- Six local tests pass, including the Worker handler against a SQLite-backed implementation of D1's binding interface. These validate actual SQL and transaction behavior, not Cloudflare's deployed runtime.
+- Cloudflare is currently signed out. Public deployment, actual D1 migration, live signup verification and browser visual QA remain outstanding. Do not claim the site is live until a public URL is verified.
+- The repository connection cannot write through its connector; signed-in GitHub browser uploads are used. No unrelated repositories are changed.

@@ -1,28 +1,3 @@
-# Proposed deployment. Applying this creates a paid service and requires owner approval.
-services:
-  - type: web
-    name: leche-flagship
-    runtime: node
-    plan: 0.5c-512mb
-    region: ohio
-    buildCommand: npm run check && npm test
-    startCommand: node src/server.mjs
-    healthCheckPath: /api/health
-    numInstances: 1
-    disk:
-      name: leche-signups
-      mountPath: /var/data
-      sizeGB: 1
-    envVars:
-      - key: NODE_VERSION
-        value: 24.15.0
-      - key: NODE_ENV
-        value: production
-      - key: HOST
-        value: 0.0.0.0
-      - key: DATA_DIR
-        value: /var/data/leche
-      - key: TRUST_PROXY
-        value: true
-# RENDER_EXTERNAL_URL is supplied by Render. SITE_URL can override it for a custom domain.
-# No admin API token is provisioned automatically; use the private operator CLI.
+# RETIRED: user has a strict $0 concept budget. Do not deploy paid Render resources.
+# Use wrangler.jsonc for Cloudflare Workers Free + D1 Free.
+services: []

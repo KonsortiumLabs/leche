@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "leche",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": { "directory": "./public", "run_worker_first": false },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "leche-signups", "migrations_dir": "migrations" }
+  ],
+  "observability": { "enabled": false },
+  "send_metrics": false
+}
