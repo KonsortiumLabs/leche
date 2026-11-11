@@ -22,7 +22,7 @@ test('all rendered routes have unique IDs, available local images, alt text, and
       assert.ok(routes.includes(href)||existsSync(resolve(root,'public','.'+href)),`Missing ${href}`);
     }
     for(const match of html.matchAll(/\b(?:for|aria-controls)="([^"]+)"/g)) assert.ok(ids.includes(match[1]),`Missing target ${match[1]}`);
-    assert.match(html,/digitally created/);
+    assert.doesNotMatch(html,/campaign imagery is digitally created|[↗↓→←⤢]/);
     assert.doesNotMatch(html,/safe to eat|certified vegan|sold out|add to cart|shipping soon/i);
   }
   const signup=renderPage('/early-access','');
