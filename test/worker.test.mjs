@@ -12,6 +12,7 @@ import { d1Store } from '../src/d1-store.mjs';
 function binding(path) {
   const sqlite=new DatabaseSync(path);sqlite.exec('PRAGMA foreign_keys=ON');
   sqlite.exec(readFileSync(new URL('../migrations/0001_early_access.sql',import.meta.url),'utf8'));
+  sqlite.exec(readFileSync(new URL('../migrations/0002_launch_validation.sql',import.meta.url),'utf8'));
   const db={sqlite,failSession:false,prepare(sql) {
     const make=args=>({bind(...values){return make(values);},
       result(){
