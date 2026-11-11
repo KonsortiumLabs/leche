@@ -1,3 +1,4 @@
+import { launchStore } from './launch-store.mjs';
 import { CONSENT_VERSION, CONSENT_TEXT } from './shared.mjs';
 
 const hex = bytes => Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2,'0')).join('');
@@ -20,6 +21,7 @@ export function d1Store(db) {
     return crypto.subtle.importKey('raw',new TextEncoder().encode(row.value),{name:'HMAC',hash:'SHA-256'},false,['sign']);
   })();
   const api = {
+    ...launchStore(db),
     async health() { await first('SELECT COUNT(*) count FROM leads'); },
     async rate(ip,group,max,windowMs=60000) {
       const now=Date.now(),bucket=Math.floor(now/windowMs);
@@ -85,8 +87,8 @@ export function d1Store(db) {
         note:'Email addresses are unverified. Reservations are nonbinding. Pageviews are events, not unique people.'
       };
     },
-    export: () => all(`SELECT l.*,s.flavor,s.price,s.intent,s.reservation,s.updated_at AS survey_updated_at
-      FROM leads l LEFT JOIN surveys s ON l.id=s.lead_id ORDER BY l.created_at,l.id`)
+    export: () => all(`SELECT l.*,s.flavor,s.price,s.intent,s.reservation,s.updated_at AS survey_updated_at,p.price_cents,p.currency,p.offer_revision,p.interested AS buy_at_price
+      FROM leads l LEFT JOIN surveys s ON l.id=s.lead_id LEFT JOIN purchase_interest p ON p.lead_id=l.id ORDER BY l.created_at,l.id`)
   };
   return api;
 }

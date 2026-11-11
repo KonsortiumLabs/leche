@@ -1,3 +1,4 @@
+import { launchStore } from './launch-store.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,9 +42,12 @@ export function openStore(directory) {
     CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires_at);
     CREATE INDEX IF NOT EXISTS rate_expiry ON rate_limits(expires_at);
   `);
+  db.exec(readFileSync(new URL('../migrations/0002_launch_validation.sql',import.meta.url),'utf8'));
+  const binding={prepare(sql){const make=values=>({bind(...args){return make(args);},result(){const results=db.prepare(sql).all(...values);return {results,meta:{changes:db.prepare('SELECT changes() n').get().n}};},async first(){return this.result().results[0]||null;},async all(){return this.result();},async run(){return this.result();}});return make([]);},async batch(statements){db.exec('BEGIN IMMEDIATE');try{const result=statements.map(s=>s.result());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}};
   const metric = (event, path) => db.prepare(`INSERT INTO metrics(day,event,path,count) VALUES(?,?,?,1)
     ON CONFLICT(day,event,path) DO UPDATE SET count=count+1`).run(new Date().toISOString().slice(0, 10), event, path);
   return {
+    ...launchStore(binding),
     db,
     metric,
     close: () => db.close(),
@@ -103,8 +107,8 @@ export function openStore(directory) {
         note: 'Email addresses are unverified. Reservations are nonbinding. Pageviews are events, not unique people.'
       };
     },
-    export() { return db.prepare(`SELECT l.*,s.flavor,s.price,s.intent,s.reservation,s.updated_at AS survey_updated_at
-      FROM leads l LEFT JOIN surveys s ON l.id=s.lead_id ORDER BY l.id`).all(); },
+    export() { return db.prepare(`SELECT l.*,s.flavor,s.price,s.intent,s.reservation,s.updated_at AS survey_updated_at,p.price_cents,p.currency,p.offer_revision,p.interested AS buy_at_price
+      FROM leads l LEFT JOIN surveys s ON l.id=s.lead_id LEFT JOIN purchase_interest p ON p.lead_id=l.id ORDER BY l.id`).all(); },
     unsubscribe(leadId) {
       db.prepare('UPDATE leads SET unsubscribed_at=? WHERE id=?').run(new Date().toISOString(), leadId);
       db.prepare('DELETE FROM sessions WHERE lead_id=?').run(leadId);

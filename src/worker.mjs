@@ -1,4 +1,6 @@
-import { renderPage, routes } from './pages.mjs';
+import { OFFER, PRICE_EVENTS } from './offer.mjs';
+import { emailConfigured, sendWelcome } from './email.mjs';
+import { renderPage, routes, utilityRoutes } from './pages.mjs';
 import { d1Store, digest } from './d1-store.mjs';
 import { toCsv } from './shared.mjs';
 
@@ -63,7 +65,7 @@ export default {
         if(req.method==='POST'&&!await store.rate(ip,'all-post',100))return send(429,{error:'A little pause. Please try again in a minute.'});
         if(path==='/api/health'&&req.method==='GET'){await store.health();return send(200,{status:'ok'});}
         if(path==='/api/session'&&req.method==='GET') {
-          const lead=await store.session(token(req));return send(200,{editable:Boolean(lead),preferences:lead?await store.preferences(lead.id):null});
+          const lead=await store.session(token(req));return send(200,{editable:Boolean(lead),preferences:lead?await store.preferences(lead.id):null,purchaseInterest:lead?await store.purchaseInterest(lead.id):null,emailVerified:Boolean(lead?.email_verified),emailEnabled:emailConfigured(env)});
         }
         if(path==='/api/signup'&&req.method==='POST') {
           if(!await store.rate(ip,'signup',8,600000)){headers.set('Retry-After','600');return send(429,{error:'A little pause. Please try again in ten minutes.'});}
@@ -71,9 +73,32 @@ export default {
           if(email.length>254||email.length<6||!/^[^\s@\x00-\x1f]+@[^\s@\x00-\x1f]+\.[^\s@\x00-\x1f]+$/.test(email))return send(400,{error:'Please enter a valid email address.',field:'email'});
           if(input.consent!==true)return send(400,{error:'Please tick the email consent box to join.',field:'consent'});
           if(input.company)return send(400,{error:'We couldn’t accept that submission. Please try again.'});
+          if(input.purchaseIntent!==undefined&&typeof input.purchaseIntent!=='boolean')return send(400,{error:'Invalid product interest.'});
           const result=await store.signup(email,attribution(input.attribution),token(req));
           if(result.token||token(req))setCookie(result.token);
+          const owned=result.token?await store.session(result.token):null;
+          if(owned&&input.purchaseIntent===true)await store.savePurchaseInterest(owned.id,true);
           return send(200,{ok:true,message:'Thank you. Your request has been received.'});
+        }
+        if(path==='/api/interest' && req.method==='POST') {
+          const lead=await store.session(token(req));
+          if(!lead)return send(401,{error:'Join the list in this browser first.'});
+          const input=await body(req);
+          if(typeof input.interested!=='boolean')return send(400,{error:'Please choose your interest.'});
+          await store.savePurchaseInterest(lead.id,input.interested);
+          return send(200,{ok:true,message:input.interested?`Your interest at ${OFFER.display} is saved.`:'Your preference is updated.'});
+        }
+        if(path==='/api/email/request' && req.method==='POST') {
+          const lead=await store.session(token(req));
+          if(!lead)return send(401,{error:'Join the list in this browser first.'});
+          if(!await store.rate(String(lead.id),'email',2,3600000))return send(429,{error:'Please wait an hour before requesting another email.'});
+          return send(200,await sendWelcome({store,lead,env:env,siteUrl:siteUrl||url.origin}));
+        }
+        if(['/api/email/confirm','/api/email/unsubscribe'].includes(path) && req.method==='POST') {
+          if(!await store.rate(ip,'email-token',12,600000))return send(429,{error:'Please try again later.'});
+          const input=await body(req);
+          const ok=path.endsWith('/confirm')?await store.confirmEmail(input.token):await store.unsubscribeEmail(input.token);
+          return send(ok?200:400,ok?{ok:true}:{error:'This link is invalid or has expired. Request a new email from the browser where you joined, or contact @tasteleche.'});
         }
         if(path==='/api/survey'&&req.method==='POST') {
           const lead=await store.session(token(req));
@@ -98,25 +123,25 @@ export default {
         if(path==='/api/event'&&req.method==='POST') {
           if(!await store.rate(ip,'events',40))return send(429,{error:'Please slow down.'});
           const input=await body(req);
-          if(!['page_view','product_view','share'].includes(input.event)||!allowedPaths.has(input.path))return send(400,{error:'Invalid event.'});
+          if(!['page_view','product_view','share',...PRICE_EVENTS].includes(input.event)||!allowedPaths.has(input.path))return send(400,{error:'Invalid event.'});
           if(input.event==='product_view'&&input.path!=='/first-taste')return send(400,{error:'Invalid product event.'});
           await store.metric(input.event,input.path);return send(200,{ok:true});
         }
         if(['/api/admin/stats','/api/admin/export'].includes(path)&&req.method==='GET') {
           if(!await store.rate(ip,'admin',10))return send(429,{error:'Please try again later.'});
           if(!await authorized(req.headers.get('authorization'),env.ADMIN_TOKEN))return send(401,{error:'Unauthorized.'});
-          if(path.endsWith('/stats'))return send(200,await store.stats());
+          if(path.endsWith('/stats'))return send(200,{...await store.stats(),...await store.launchStats(),email_enabled:emailConfigured(env)});
           headers.set('Content-Disposition','attachment; filename="leche-early-access.csv"');
-          return send(200,toCsv(await store.export()),'text/csv; charset=utf-8');
+          return send(200,toCsv((await store.export()).filter(row=>url.searchParams.get('active')!=='1'||!row.unsubscribed_at)),'text/csv; charset=utf-8');
         }
         return send(404,{error:'Endpoint not found.'});
       }
       if(!['GET','HEAD'].includes(req.method)){headers.set('Allow','GET, HEAD');return send(405,'Method not allowed.','text/plain');}
-      if(path==='/robots.txt')return send(200,`User-agent: *\nDisallow: /api/\nSitemap: ${siteUrl}/sitemap.xml\n`,'text/plain');
+      if(path==='/robots.txt')return send(200,`User-agent: *\nDisallow: /api/\nDisallow: /studio\nDisallow: /confirm-email\nDisallow: /leave\nSitemap: ${siteUrl}/sitemap.xml\n`,'text/plain');
       if(path==='/sitemap.xml')return send(200,`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map(p=>`<url><loc>${siteUrl}${p==='/'?'':p}</loc></url>`).join('')}</urlset>`,'application/xml');
       if(path.length>1&&path.endsWith('/')){headers.set('Location',path.slice(0,-1)+url.search);return new Response(null,{status:308,headers});}
       // Existing static files are served by Cloudflare's asset layer before this handler.
-      return send(routes.includes(path)?200:404,renderPage(path,siteUrl),'text/html; charset=utf-8');
+      return send(routes.includes(path)||utilityRoutes.includes(path)?200:404,renderPage(path,siteUrl),'text/html; charset=utf-8');
     } catch(e) {
       // Log no request body, email, cookie, authorization header, or raw database error.
       if(!e.status)console.error('LÈCHE request failed; check D1 binding, migration and quota.');
